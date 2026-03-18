@@ -3,7 +3,6 @@
 // Avvio server (Node classico)
 //===================================================
 
-
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const { neon } = require("@neondatabase/serverless");
@@ -59,12 +58,16 @@ app.use("/login", loginController(sql));
 app.use("/register", registrationController(sql));
 app.use("/auth", authController(sql));
 app.use("/utenti", verifyToken, requireOrganizer, utentiController(sql));
+
 // Eventi - visibili a tutti gli utenti autenticati, modificabili solo dagli organizzatori
 app.use("/eventi", verifyToken, eventiController(sql));
+
 // Iscrizioni - operazioni lato dipendente
 app.use("/iscrizioni", verifyToken, requireDipendente, iscrizioniController(sql));
+
 // Check-in - solo organizzatori
 app.use("/checkin", verifyToken, requireOrganizer, checkinController(sql));
+
 // Statistiche eventi passati - solo organizzatori
 app.use(
   "/statistiche",
@@ -73,9 +76,7 @@ app.use(
   statisticheController(sql)
 );
 
-
-
-
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server is running on port ${port}`);
 });
+

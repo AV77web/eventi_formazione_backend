@@ -53,7 +53,6 @@ const iscrizioniController = (sql) => {
     }
 
     try {
-      // Verifica che l'evento esista e che la data sia nel futuro (fino al giorno prima)
       const eventi = await sql`
         SELECT eventoid, data
         FROM evento
@@ -64,9 +63,6 @@ const iscrizioniController = (sql) => {
         return res.status(404).json({ error: "Evento non trovato" });
       }
 
-      // Regola: si può iscriversi solo fino al giorno prima dell'evento.
-      // Equivalentemente: l'evento deve avere data > CURRENT_DATE (DB).
-      // Evitiamo confronti con new Date().toISOString() (UTC) per non introdurre mismatch timezone.
       const allowed = await sql`
         SELECT 1
         FROM evento
@@ -81,7 +77,6 @@ const iscrizioniController = (sql) => {
         });
       }
 
-      // Inserisci l'iscrizione, sfruttando il vincolo UNIQUE (utenteid, eventoid)
       try {
         const rows = await sql`
           INSERT INTO iscrizione (utenteid, eventoid, checkineffettuato)
@@ -97,7 +92,6 @@ const iscrizioniController = (sql) => {
         return res.status(201).json(rows[0]);
       } catch (err) {
         if (err.code === "23505") {
-          // Violazione vincolo UNIQUE (utenteid, eventoid)
           return res.status(409).json({
             error: "Sei già iscritto a questo evento",
           });
@@ -127,7 +121,6 @@ const iscrizioniController = (sql) => {
     }
 
     try {
-      // Carica iscrizione + evento correlato
       const rows = await sql`
         SELECT 
           i.iscrizioneid AS "IscrizioneID",
@@ -150,8 +143,6 @@ const iscrizioniController = (sql) => {
         });
       }
 
-      // Regola: disiscrizione possibile solo fino al giorno prima dell'evento.
-      // Equivalentemente: data evento deve essere > CURRENT_DATE (DB).
       const allowed = await sql`
         SELECT 1
         FROM evento e

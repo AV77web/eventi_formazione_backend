@@ -38,7 +38,10 @@ const statisticheController = (sql) => {
 
       return res.json(rows);
     } catch (err) {
-      console.error("[STATISTICHE] Errore GET /statistiche/eventi-passati:", err);
+      console.error(
+        "[STATISTICHE] Errore GET /statistiche/eventi-passati:",
+        err
+      );
       return res.status(500).json({
         error: "Errore interno del server",
         details: err.message,
