@@ -57,12 +57,7 @@ function createApp() {
   app.use("/login", loginController(sql));
   app.use("/register", registrationController(sql));
   app.use("/auth", authController(sql));
-  app.use(
-    "/utenti",
-    verifyToken,
-    verifyRole(["Amministratore"]),
-    utentiController(sql)
-  );
+  app.use("/utenti", verifyToken, requireOrganizer, utentiController(sql));
   // Eventi - visibili a tutti gli utenti autenticati, modificabili solo dagli organizzatori
   app.use("/eventi", verifyToken, eventiController(sql));
   // Iscrizioni - operazioni lato dipendente

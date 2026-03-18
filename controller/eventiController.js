@@ -69,6 +69,13 @@ const eventiController = (sql) => {
 
   // POST /eventi (solo organizzatori, protetto in app.js)
   router.post("/", async (req, res) => {
+    // Solo gli organizzatori possono creare eventi
+    if (!req.user || req.user.ruolo !== "Organizzatore") {
+      return res
+        .status(403)
+        .json({ error: "Solo gli organizzatori possono creare eventi" });
+    }
+
     const { titolo, data, descrizione } = req.body || {};
 
     if (!titolo || !data || !descrizione) {
@@ -100,6 +107,13 @@ const eventiController = (sql) => {
 
   // PUT /eventi/:id (solo organizzatori)
   router.put("/:id", async (req, res) => {
+    // Solo gli organizzatori possono modificare eventi
+    if (!req.user || req.user.ruolo !== "Organizzatore") {
+      return res
+        .status(403)
+        .json({ error: "Solo gli organizzatori possono modificare eventi" });
+    }
+
     const { id } = req.params;
     const eventoId = parseInt(id, 10);
     const { titolo, data, descrizione } = req.body || {};
@@ -143,6 +157,13 @@ const eventiController = (sql) => {
 
   // DELETE /eventi/:id (solo organizzatori)
   router.delete("/:id", async (req, res) => {
+    // Solo gli organizzatori possono eliminare eventi
+    if (!req.user || req.user.ruolo !== "Organizzatore") {
+      return res
+        .status(403)
+        .json({ error: "Solo gli organizzatori possono eliminare eventi" });
+    }
+
     const { id } = req.params;
     const eventoId = parseInt(id, 10);
     if (Number.isNaN(eventoId)) {
