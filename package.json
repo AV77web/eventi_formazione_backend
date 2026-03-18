@@ -1,4 +1,15 @@
 {
+  "name": "eventi-formazione-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
     "bcrypt": "^6.0.0",
