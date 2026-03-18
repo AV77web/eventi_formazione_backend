@@ -64,10 +64,20 @@ const iscrizioniController = (sql) => {
         return res.status(404).json({ error: "Evento non trovato" });
       }
 
-      const evento = eventi[0];
-      if (!(evento.data > new Date().toISOString().slice(0, 10))) {
+      // Regola: si può iscriversi solo fino al giorno prima dell'evento.
+      // Equivalentemente: l'evento deve avere data > CURRENT_DATE (DB).
+      // Evitiamo confronti con new Date().toISOString() (UTC) per non introdurre mismatch timezone.
+      const allowed = await sql`
+        SELECT 1
+        FROM evento
+        WHERE eventoid = ${eventoid}
+          AND data > CURRENT_DATE
+      `;
+
+      if (allowed.length === 0) {
         return res.status(400).json({
-          error: "È possibile iscriversi solo fino al giorno prima della data dell'evento",
+          error:
+            "È possibile iscriversi solo fino al giorno prima della data dell'evento",
         });
       }
 
@@ -122,6 +132,7 @@ const iscrizioniController = (sql) => {
         SELECT 
           i.iscrizioneid AS "IscrizioneID",
           i.utenteid     AS "UtenteID",
+          e.eventoid     AS "EventoID",
           e.data         AS "DataEvento"
         FROM iscrizione i
         JOIN evento e ON i.eventoid = e.eventoid
@@ -139,9 +150,19 @@ const iscrizioniController = (sql) => {
         });
       }
 
-      if (!(iscrizione.DataEvento > new Date().toISOString().slice(0, 10))) {
+      // Regola: disiscrizione possibile solo fino al giorno prima dell'evento.
+      // Equivalentemente: data evento deve essere > CURRENT_DATE (DB).
+      const allowed = await sql`
+        SELECT 1
+        FROM evento e
+        WHERE e.eventoid = ${iscrizione.EventoID}
+          AND e.data > CURRENT_DATE
+      `;
+
+      if (allowed.length === 0) {
         return res.status(400).json({
-          error: "È possibile annullare l'iscrizione solo fino al giorno prima della data dell'evento",
+          error:
+            "È possibile annullare l'iscrizione solo fino al giorno prima della data dell'evento",
         });
       }
 
