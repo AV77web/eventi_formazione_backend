@@ -3,6 +3,11 @@
 // Avvio server (Node classico)
 //===================================================
 
+// Carica le variabili d'ambiente da .env in sviluppo (locale)
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
+
 const { createApp } = require("./app");
 
 const port = process.env.PORT || 3000;

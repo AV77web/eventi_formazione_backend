@@ -13,7 +13,16 @@ const loginController = require("./controller/loginController");
 const registrationController = require("./controller/registrationController");
 const authController = require("./controller/authController");
 const utentiController = require("./controller/utentiController");
-const { verifyToken, verifyRole } = require("./middleware/authMiddleware");
+const eventiController = require("./controller/eventiController");
+const iscrizioniController = require("./controller/iscrizioniController");
+const checkinController = require("./controller/checkinController");
+const statisticheController = require("./controller/statisticheController");
+const {
+  verifyToken,
+  verifyRole,
+  requireOrganizer,
+  requireDipendente,
+} = require("./middleware/authMiddleware");
 const { setupSwagger } = require("./swagger");
 
 function createApp() {
@@ -53,6 +62,19 @@ function createApp() {
     verifyToken,
     verifyRole(["Amministratore"]),
     utentiController(sql)
+  );
+  // Eventi - visibili a tutti gli utenti autenticati, modificabili solo dagli organizzatori
+  app.use("/eventi", verifyToken, eventiController(sql));
+  // Iscrizioni - operazioni lato dipendente
+  app.use("/iscrizioni", verifyToken, requireDipendente, iscrizioniController(sql));
+  // Check-in - solo organizzatori
+  app.use("/checkin", verifyToken, requireOrganizer, checkinController(sql));
+  // Statistiche eventi passati - solo organizzatori
+  app.use(
+    "/statistiche",
+    verifyToken,
+    requireOrganizer,
+    statisticheController(sql)
   );
 
   return app;

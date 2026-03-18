@@ -130,10 +130,10 @@ const registrationController = (sql) => {
             });
         }
 
-        // Validazione del ruolo (se fornito) - viene mappato sul flag Admin
-        if (ruolo && ruolo !== "Dipendente" && ruolo !== "Responsabile" && ruolo !== "Operatore" && ruolo !== "Amministratore") {
+        // Validazione del ruolo (se fornito)
+        if (ruolo && ruolo !== "Dipendente" && ruolo !== "Organizzatore") {
             return res.status(400).json({
-                error: "Il ruolo deve essere 'Dipendente', 'Responsabile', 'Operatore' o 'Amministratore'"
+                error: "Il ruolo deve essere 'Dipendente' o 'Organizzatore'"
             });
         }
 
@@ -174,42 +174,33 @@ const registrationController = (sql) => {
             const saltRounds = 10;
             const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-            // Calcola il flag Admin a partire dal ruolo (se fornito)
-            const isAdmin =
-                ruolo === "Responsabile" ||
-                ruolo === "Amministratore" ||
-                ruolo === "Admin";
+            // Ruolo da salvare nel DB: default Dipendente
+            const ruoloDb = ruolo === "Organizzatore" ? "Organizzatore" : "Dipendente";
 
-            const adminValue = isAdmin ? "true" : "false";
-
-            // Inserisci il nuovo utente nel database (schema: UtenteID, Email, Password, Admin)
+            // Inserisci il nuovo utente nel database (schema: utenteid, nome, cognome, email, ruolo, password)
             const result = await sql`
-                INSERT INTO utente (email, password, admin)
-                VALUES (${email}, ${hashedPassword}, ${adminValue})
+                INSERT INTO utente (nome, cognome, email, ruolo, password)
+                VALUES (${nome || ""}, ${cognome || ""}, ${email}, ${ruoloDb}, ${hashedPassword})
                 RETURNING 
                     utenteid AS "UtenteID",
+                    nome     AS "Nome",
+                    cognome  AS "Cognome",
                     email    AS "Email",
-                    admin    AS "Admin"
+                    ruolo    AS "Ruolo"
             `;
 
             const newUser = result[0];
             console.log("[REGISTRAZIONE] Utente creato con successo - ID:", newUser.UtenteID);
-
-            // Ruolo logico usato dal frontend e dal token
-            const ruoloLogico = (newUser.Admin === true || newUser.Admin === "true" || newUser.Admin === "1")
-                ? "Amministratore"
-                : "Operatore";
 
             // Restituisci i dati dell'utente creato (senza password)
             return res.status(201).json({
                 message: "Utente registrato con successo",
                 user: {
                     id: newUser.UtenteID,
-                    // nome/cognome non sono più salvati nel DB, ma li rimandiamo al client se forniti
-                    nome: nome || "",
-                    cognome: cognome || "",
+                    nome: newUser.Nome,
+                    cognome: newUser.Cognome,
                     email: newUser.Email,
-                    ruolo: ruoloLogico
+                    ruolo: newUser.Ruolo
                 }
             });
 

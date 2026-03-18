@@ -121,13 +121,15 @@ const loginController = (sql) => {
         }
 
         try {
-            // Cerca l'utente per email nella tabella utente (schema: UtenteID, Email, Password, Admin)
+            // Cerca l'utente per email nella tabella utente (schema: utenteid, nome, cognome, email, ruolo, password)
             const result = await sql`
                 SELECT 
                     utenteid AS "UtenteID",
+                    nome     AS "Nome",
+                    cognome  AS "Cognome",
                     email    AS "Email",
-                    password AS "Password",
-                    admin    AS "Admin"
+                    ruolo    AS "Ruolo",
+                    password AS "Password"
                 FROM utente 
                 WHERE email = ${email}
             `;
@@ -149,13 +151,8 @@ const loginController = (sql) => {
 
             console.log("[LOGIN] Autenticazione riuscita per:", email);
 
-            // Calcola ruolo logico a partire dal flag Admin
-            const isAdmin =
-                utente.Admin === true ||
-                utente.Admin === "true" ||
-                utente.Admin === "1";
-
-            const ruoloLogico = isAdmin ? "Amministratore" : "Operatore";
+            // Ruolo logico direttamente dal campo ruolo
+            const ruoloLogico = utente.Ruolo || "Dipendente";
 
             // Genera il Token JWT per la gestione della Session
             const token = jwt.sign(
@@ -186,6 +183,8 @@ const loginController = (sql) => {
                 message: "Login effettuato con successo",
                 user: {
                     id: utente.UtenteID,
+                    nome: utente.Nome,
+                    cognome: utente.Cognome,
                     email: utente.Email,
                     ruolo: ruoloLogico
                 }

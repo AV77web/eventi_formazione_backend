@@ -1,4 +1,4 @@
-﻿const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
     const token = req.cookies.token;
@@ -28,6 +28,29 @@ const verifyRole = (allowedRoles) => {
     };
 };
 
+const requireOrganizer = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ error: "Non autenticato" });
+    }
+    if (req.user.ruolo !== "Organizzatore") {
+        return res.status(403).json({ error: "Solo gli organizzatori possono effettuare questa operazione" });
+    }
+    return next();
+};
+
+const requireDipendente = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ error: "Non autenticato" });
+    }
+    if (!["Dipendente", "Organizzatore"].includes(req.user.ruolo)) {
+        return res.status(403).json({ error: "Ruolo utente non abilitato per questa operazione" });
+    }
+    return next();
+};
+
 module.exports = authMiddleware;
 module.exports.verifyToken = verifyToken;
 module.exports.verifyRole = verifyRole;
+module.exports.requireOrganizer = requireOrganizer;
+module.exports.requireDipendente = requireDipendente;
+
