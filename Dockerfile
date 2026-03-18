@@ -1,39 +1,52 @@
-# syntax = docker/dockerfile:1
+# syntax=docker/dockerfile:1
 
-# Adjust NODE_VERSION as desired
+# Versione di Node da usare
 ARG NODE_VERSION=22.14.0
+
+# Base image
 FROM node:${NODE_VERSION}-slim AS base
 
 LABEL fly_launch_runtime="Node.js"
 
-# Node.js app lives here
+# Working directory
 WORKDIR /app
 
-# Set production environment
-ENV NODE_ENV="production"
-
-
-# Throw-away build stage to reduce size of final image
+# =========================
+# STAGE 1: build
+# =========================
 FROM base AS build
 
-# Install packages needed to build node modules
+# Dipendenze per compilare i moduli native (se servono)
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
+    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3 && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install node modules
-COPY package-lock.json package.json ./
+# Installa dipendenze
+COPY package*.json ./
 RUN npm ci
 
-# Copy application code
+# Copia il codice applicativo
 COPY . .
 
+# Se hai uno step di build (React, Next, ecc.), lascialo:
+# altrimenti puoi commentare la riga sotto
+RUN npm run build || echo "Nessuno step di build, continuo..."
 
-# Final stage for app image
-FROM base
+# =========================
+# STAGE 2: runtime
+# =========================
+FROM node:${NODE_VERSION}-slim AS runtime
 
-# Copy built application
+WORKDIR /app
+
+# Ambiente produzione
+ENV NODE_ENV=production
+
+# Copia SOLO ciò che serve a runtime
 COPY --from=build /app /app
 
-# Start the server by default, this can be overwritten at runtime
+# Espone la porta (adatta se serve diversa)
 EXPOSE 3000
+
+# Comando di avvio (adatta se usi un altro script)
 CMD [ "npm", "run", "start" ]

@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for eventi-formazione-backend on 2026-03-18T13:07:11+01:00
+# fly.toml app configuration file generated for eventi-formazione-backend on 2026-03-18T11:57:16Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -7,6 +7,7 @@ app = 'eventi-formazione-backend'
 primary_region = 'ams'
 
 [build]
+  dockerfile = "Dockerfile"
 
 [http_service]
   internal_port = 3000
@@ -17,6 +18,6 @@ primary_region = 'ams'
   processes = ['app']
 
 [[vm]]
-  memory = '1gb'
+  cpu_kind = 'shared'
   cpus = 1
-  memory_mb = 1024
+  memory = '256mb'
