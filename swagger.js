@@ -5,6 +5,7 @@
 
 const swaggerJSDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
+const path = require("path");
 
 function setupSwagger(app) {
   const swaggerDefinition = {
@@ -17,7 +18,14 @@ function setupSwagger(app) {
 
   const options = {
     swaggerDefinition,
-    apis: ["./**/*.js"],
+    // Evita di scansionare directory (es. node_modules) che possono causare EISDIR su Fly
+    apis: [
+      path.join(__dirname, "index.js"),
+      path.join(__dirname, "app.js"),
+      path.join(__dirname, "config.js"),
+      path.join(__dirname, "controller", "*.js"),
+      path.join(__dirname, "middleware", "*.js"),
+    ],
   };
 
   const swaggerSpec = swaggerJSDoc(options);
