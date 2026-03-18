@@ -21,7 +21,6 @@ function setupSwagger(app) {
     // Evita di scansionare directory (es. node_modules) che possono causare EISDIR su Fly
     apis: [
       path.join(__dirname, "index.js"),
-      path.join(__dirname, "app.js"),
       path.join(__dirname, "config.js"),
       path.join(__dirname, "controller", "*.js"),
       path.join(__dirname, "middleware", "*.js"),
