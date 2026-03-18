@@ -1,6 +1,7 @@
 //=================================================
 // File: utentiController.js
-// Gestione CRUD degli utenti di sistema (solo Amministratore)
+// Gestione CRUD degli utenti di sistema (solo Organizzatore)
+// Allineato al modello: nome, cognome, email, ruolo, password
 //=================================================
 
 /**
@@ -13,13 +14,20 @@
  *         UtenteID:
  *           type: integer
  *           example: 1
+ *         Nome:
+ *           type: string
+ *           example: Mario
+ *         Cognome:
+ *           type: string
+ *           example: Rossi
  *         Email:
  *           type: string
  *           format: email
- *           example: admin@example.com
- *         Admin:
- *           type: boolean
- *           example: true
+ *           example: mario.rossi@example.com
+ *         Ruolo:
+ *           type: string
+ *           enum: [Dipendente, Organizzatore]
+ *           example: Dipendente
  */
 
 const express = require("express");
@@ -67,8 +75,10 @@ const utentiController = (sql) => {
       const result = await sql`
         SELECT 
           utenteid AS "UtenteID",
+          nome     AS "Nome",
+          cognome  AS "Cognome",
           email    AS "Email",
-          admin    AS "Admin"
+          ruolo    AS "Ruolo"
         FROM utente
         ORDER BY utenteid ASC
       `;
@@ -89,8 +99,8 @@ const utentiController = (sql) => {
 
   /**
    * POST /utenti
-   * Crea un nuovo utente.
-   * Body: { email, password, admin }
+   * Crea un nuovo utente (uso interno organizzatore).
+   * Body: { nome, cognome, email, password, ruolo }
    */
   /**
  * @openapi
@@ -110,15 +120,20 @@ const utentiController = (sql) => {
  *             required:
  *               - email
  *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *               password:
- *                 type: string
- *                 format: password
- *               admin:
- *                 type: boolean
+   *             properties:
+   *               nome:
+   *                 type: string
+   *               cognome:
+   *                 type: string
+   *               email:
+   *                 type: string
+   *                 format: email
+   *               password:
+   *                 type: string
+   *                 format: password
+   *               ruolo:
+   *                 type: string
+   *                 enum: [Dipendente, Organizzatore]
  *     responses:
  *       201:
  *         description: Utente creato con successo
@@ -132,7 +147,7 @@ const utentiController = (sql) => {
   router.post("/", async (req, res) => {
     console.log("[UTENTI] Creazione nuovo utente");
 
-    const { email, password, admin } = req.body || {};
+    const { nome, cognome, email, password, ruolo } = req.body || {};
 
     if (!email || !password) {
       return res.status(400).json({
@@ -152,13 +167,19 @@ const utentiController = (sql) => {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const adminValue =
-        admin === true || admin === "true" || admin === "1" ? "true" : "false";
+
+      const ruoloDb =
+        ruolo === "Organizzatore" ? "Organizzatore" : "Dipendente";
 
       const result = await sql`
-        INSERT INTO utente (email, password, admin)
-        VALUES (${email}, ${hashedPassword}, ${adminValue})
-        RETURNING utenteid AS "UtenteID", email AS "Email", admin AS "Admin"
+        INSERT INTO utente (nome, cognome, email, ruolo, password)
+        VALUES (${nome || ""}, ${cognome || ""}, ${email}, ${ruoloDb}, ${hashedPassword})
+        RETURNING 
+          utenteid AS "UtenteID",
+          nome     AS "Nome",
+          cognome  AS "Cognome",
+          email    AS "Email",
+          ruolo    AS "Ruolo"
       `;
 
       return res.status(201).json({
@@ -177,7 +198,7 @@ const utentiController = (sql) => {
 
   /**
    * PUT /utenti/:id
-   * Modifica email / password / admin di un utente.
+   * Modifica dati e ruolo di un utente.
    */
   /**
  * @openapi
@@ -227,7 +248,7 @@ const utentiController = (sql) => {
   router.put("/:id", async (req, res) => {
     console.log("[UTENTI] Modifica utente ID:", req.params.id);
     const { id } = req.params;
-    const { email, password, admin } = req.body || {};
+    const { nome, cognome, email, password, ruolo } = req.body || {};
 
     const utenteId = parseInt(id, 10);
     if (Number.isNaN(utenteId)) {
@@ -265,16 +286,23 @@ const utentiController = (sql) => {
         hashedPasswordFragment = sql`, password = ${hashedPassword}`;
       }
 
-      const adminValue =
-        admin === true || admin === "true" || admin === "1" ? "true" : "false";
+      const ruoloDb =
+        ruolo === "Organizzatore" ? "Organizzatore" : "Dipendente";
 
       const result = await sql`
         UPDATE utente
-        SET email = ${email},
-            admin = ${adminValue}
+        SET nome = ${nome || ""},
+            cognome = ${cognome || ""},
+            email = ${email},
+            ruolo = ${ruoloDb}
             ${hashedPasswordFragment}
         WHERE utenteid = ${utenteId}
-        RETURNING utenteid AS "UtenteID", email AS "Email", admin AS "Admin"
+        RETURNING 
+          utenteid AS "UtenteID",
+          nome     AS "Nome",
+          cognome  AS "Cognome",
+          email    AS "Email",
+          ruolo    AS "Ruolo"
       `;
 
       return res.json({
