@@ -157,6 +157,8 @@ const loginController = (sql) => {
             const token = jwt.sign(
                 {
                     id: utente.UtenteID,
+                    nome: utente.Nome,
+                    cognome: utente.Cognome,
                     email: utente.Email,
                     ruolo: ruoloLogico
                 },

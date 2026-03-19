@@ -75,6 +75,8 @@ const authController = (sql) => {
             authenticated: true,
             user: {
                 id: req.user.id,
+                nome: req.user.nome,
+                cognome: req.user.cognome,
                 email: req.user.email,
                 ruolo: req.user.ruolo
             }
